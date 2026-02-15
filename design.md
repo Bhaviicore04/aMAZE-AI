@@ -793,119 +793,139 @@ A property is a characteristic or behavior that should hold true across all vali
    - Data exceeds size limits
 
 ### Error Handling Strategy
+// Custom error types
+class ApiError extends Error {
+  constructor(
+    public statusCode: number,
+    public errorCode?: string,
+    message?: string
+  ) {
+    super(message);
+  }
+}
 
-```typescript
+class AIServiceError extends Error {
+  constructor(
+    public model?: string,
+    message?: string
+  ) {
+    super(message);
+  }
+}
+
 // Centralized error handler
 class ErrorHandler {
-  static handle(error: Error, context: string): UserFacingError {
-    // Log error for debugging
+  static handle(error: unknown, context: string): UserFacingError {
     console.error(`Error in ${context}:`, error);
-    
-    // Convert to user-friendly message
-    if (error instanceof FirebaseError) {
-      return this.handleFirebaseError(error);
-    } else if (error instanceof AIError) {
+
+    if (error instanceof ApiError) {
+      return this.handleApiError(error);
+    } else if (error instanceof AIServiceError) {
       return this.handleAIError(error);
-    } else if (error instanceof ValidationError) {
-      return this.handleValidationError(error);
     }
-    
-    // Generic fallback
+
     return {
       title: 'Something went wrong',
-      message: 'Please try again or contact support if the problem persists.',
+      message: 'Please try again later.',
       retryable: true
     };
   }
-  
-  static handleFirebaseError(error: FirebaseError): UserFacingError {
-    switch (error.code) {
-      case 'permission-denied':
+#entry retry logic
+  static handleApiError(error: ApiError): UserFacingError {
+    switch (error.statusCode) {
+      case 401:
         return {
-          title: 'Access Denied',
-          message: 'You don\'t have permission to perform this action.',
+          title: 'Authentication Required',
+          message: 'Please log in again to continue.',
           retryable: false
         };
-      case 'unavailable':
+      case 403:
         return {
-          title: 'Connection Issue',
-          message: 'Unable to connect to the server. Please check your internet connection.',
+          title: 'Access Denied',
+          message: 'You do not have permission to perform this action.',
+          retryable: false
+        };
+      case 503:
+        return {
+          title: 'Service Unavailable',
+          message: 'Server is temporarily unavailable. Please try again.',
           retryable: true
         };
-      // ... more cases
+      default:
+        return {
+          title: 'Server Error',
+          message: 'An unexpected error occurred.',
+          retryable: true
+        };
     }
+  }
+
+  static handleAIError(error: AIServiceError): UserFacingError {
+    return {
+      title: 'AI Processing Error',
+      message: 'Unable to generate ideas at the moment. Please try again.',
+      retryable: true
+    };
   }
 }
 
-// Usage in components
-try {
-  await saveContentIdea(idea);
-  showSuccessToast('Idea saved successfully!');
-} catch (error) {
-  const userError = ErrorHandler.handle(error, 'saveContentIdea');
-  showErrorToast(userError.title, userError.message, userError.retryable);
-}
-```
-
-### Retry Logic
-
-```typescript
 // Exponential backoff retry
 async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
   baseDelay: number = 1000
 ): Promise<T> {
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await operation();
-    } catch (error) {
-      if (attempt === maxRetries - 1) throw error;
+    } catch (error: any) {
       
+      // Don't retry client errors (4xx)
+      if (error.statusCode && error.statusCode < 500) {
+        throw error;
+      }
+
+      if (attempt === maxRetries - 1) throw error;
+
       const delay = baseDelay * Math.pow(2, attempt);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
+
   throw new Error('Max retries exceeded');
 }
-
-// Usage
 const result = await retryWithBackoff(
-  () => firestoreService.saveContentIdea(idea),
+  () => apiService.saveContentIdea(idea),  // Calls API Gateway
   3,
   1000
 );
-```
-
-### Loading States
-
-```typescript
-// Loading state management
 interface LoadingState {
   isLoading: boolean;
   operation: string;
   progress?: number;
 }
 
-// Usage in components
 const [loadingState, setLoadingState] = useState<LoadingState>({
   isLoading: false,
   operation: ''
 });
 
 async function generateIdeas() {
-  setLoadingState({ isLoading: true, operation: 'Generating ideas...' });
-  
+  setLoadingState({ isLoading: true, operation: 'Generating ideas using AI...' });
+
   try {
-    const ideas = await aiService.generateContentIdeas(request);
+    const ideas = await apiService.generateIdeas(request); // Calls Lambda → Bedrock
     // Handle success
   } catch (error) {
-    // Handle error
+    const userError = ErrorHandler.handle(error, 'generateIdeas');
+    showErrorToast(userError.title, userError.message, userError.retryable);
   } finally {
     setLoadingState({ isLoading: false, operation: '' });
   }
 }
-```
+
+
 
 ## Testing Strategy
 
@@ -989,74 +1009,77 @@ function contentIdeaArbitrary() {
 
 **Example Unit Tests**:
 
-```typescript
 // Service layer unit test
-describe('FirestoreService', () => {
-  test('saveContentIdea stores idea with generated ID', async () => {
+describe('ApiService', () => {
+
+  test('saveContentIdea returns generated ID', async () => {
     const idea = createMockContentIdea();
-    const id = await firestoreService.saveContentIdea(idea);
-    
+
+    // Mock fetch response (API Gateway → Lambda)
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'generated-id-123' })
+    } as Response);
+
+    const id = await apiService.saveContentIdea(idea);
+
     expect(id).toBeDefined();
     expect(typeof id).toBe('string');
+    expect(id).toBe('generated-id-123');
   });
-  
+
   test('saveContentIdea throws error for invalid data', async () => {
     const invalidIdea = { ...createMockContentIdea(), title: '' };
-    
+
     await expect(
-      firestoreService.saveContentIdea(invalidIdea)
+      apiService.saveContentIdea(invalidIdea)
     ).rejects.toThrow('Title is required');
   });
-});
 
-// Component unit test
+});
 describe('IdeaGenerator', () => {
+
   test('displays generated ideas after submission', async () => {
+
+    // Mock API success response
+    vi.spyOn(apiService, 'generateIdeas').mockResolvedValue([
+      { id: '1', title: 'Short-form idea for Tech creators' }
+    ]);
+
     render(<IdeaGenerator userId="test-user" />);
-    
-    // Fill form
-    fireEvent.change(screen.getByLabelText('Niche'), { target: { value: 'Tech' } });
-    fireEvent.click(screen.getByText('Generate Ideas'));
-    
-    // Wait for ideas to appear
-    await waitFor(() => {
-      expect(screen.getByText(/Short-form idea/i)).toBeInTheDocument();
-    });
-  });
-  
-  test('shows error message when generation fails', async () => {
-    // Mock AI service to fail
-    vi.spyOn(aiService, 'generateContentIdeas').mockRejectedValue(
-      new Error('API rate limit exceeded')
+
+    fireEvent.change(
+      screen.getByLabelText('Niche'),
+      { target: { value: 'Tech' } }
     );
-    
-    render(<IdeaGenerator userId="test-user" />);
+
     fireEvent.click(screen.getByText('Generate Ideas'));
-    
+
     await waitFor(() => {
-      expect(screen.getByText(/rate limit/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Short-form idea/i)
+      ).toBeInTheDocument();
     });
   });
+
+  test('shows error message when generation fails', async () => {
+
+    vi.spyOn(apiService, 'generateIdeas')
+      .mockRejectedValue(new Error('API rate limit exceeded'));
+
+    render(<IdeaGenerator userId="test-user" />);
+
+    fireEvent.click(screen.getByText('Generate Ideas'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/rate limit/i)
+      ).toBeInTheDocument();
+    });
+  });
+
 });
-```
 
-### Testing Firebase Integration
-
-**Approach**: Use Firebase Emulator Suite for local testing
-
-```typescript
-// Test setup with emulators
-beforeAll(async () => {
-  // Connect to emulators
-  connectAuthEmulator(auth, 'http://localhost:9099');
-  connectFirestoreEmulator(firestore, 'localhost', 8080);
-});
-
-afterEach(async () => {
-  // Clear emulator data between tests
-  await clearFirestoreData();
-});
-```
 
 ### AI Service Testing
 
