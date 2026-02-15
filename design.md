@@ -1,8 +1,8 @@
-# Design Document: CreatorSync AI
+# Design Document: aMAZE-AI
 
 ## Overview
 
-CreatorSync AI is a modern web application built with React, TypeScript, and Firebase that serves two distinct user personas: Content Creators and Content Consumers. The platform leverages Firebase's Vertex AI integration (or Firebase Extensions for AI) to provide intelligent content generation, personalization, and reflection capabilities.
+aMAZE AI is a modern web application built with React, TypeScript, and Firebase that serves two distinct user personas: Content Creators and Content Consumers. The platform leverages Firebase's Vertex AI integration (or Firebase Extensions for AI) to provide intelligent content generation, personalization, and reflection capabilities.
 
 The architecture follows a component-based design with clear separation between presentation, business logic, and data access layers. The application uses Firebase Authentication for user management, Firestore for data persistence, and integrates with generative AI APIs for content intelligence features.
 
@@ -81,7 +81,7 @@ graph TB
 ### Project Structure
 
 ```
-creatorsync-ai/
+aMAZE-ai/
 ├── src/
 │   ├── components/
 │   │   ├── common/          # Shared components (Button, Card, Modal, etc.)
