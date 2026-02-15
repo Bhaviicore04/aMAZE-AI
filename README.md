@@ -26,7 +26,7 @@ A modern, AI-powered web application for Content Creators and Content Consumers 
 ## Project Structure
 
 ```
-creatorsync-ai/
+aMAZE-AI/
 ├── src/
 │   ├── components/     # React components
 │   ├── pages/          # Page components
