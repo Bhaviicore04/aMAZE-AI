@@ -16,8 +16,8 @@ Backend can be deployed using AWS services such as AWS Lambda, DynamoDB, and Cog
 - **Frontend**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **Backend**: Firebase (Authentication, Firestore, Cloud Functions)
-- **AI**: Firebase Vertex AI / AI Extensions
+- **Backend**: AWS cognito
+- **AI**: Amazon Web Services Lambda
 - **Animations**: Framer Motion
 - **Forms**: React Hook Form
 - **Routing**: React Router v6
@@ -42,99 +42,219 @@ aMAZE-AI/
 ```
 
 ## Setup Instructions
+Prerequisites
 
-### Prerequisites
+Node.js (v18+)
 
-- Node.js v25.6.1 or higher
-- npm 11.9.0 or higher
-- Firebase account
+npm
 
-### Installation
+AWS Account on Amazon Web Services
 
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   cd aMAZE-AI
-   ```
+AWS CLI installed
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+Install AWS CLI:
 
-3. Create a `.env` file based on `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
+npm install -g aws-cli
 
-4. Configure Firebase:
-   - Create a new Firebase project at https://console.firebase.google.com
-   - Enable Authentication (Google and Email/Password)
-   - Create a Firestore database
-   - Copy your Firebase configuration values to the `.env` file
 
-5. Deploy Firestore security rules:
-   ```bash
-   firebase deploy --only firestore:rules
-   ```
+Configure AWS credentials:
 
-### Development
+aws configure
 
-Run the development server:
-```bash
+
+Enter:
+
+AWS Access Key
+
+AWS Secret Key
+
+Region (e.g., ap-south-1)
+
+Default output format: json
+
+🔐 2️⃣ Authentication Setup (Amazon Cognito)
+
+Use Amazon Web Services Cognito
+
+Steps:
+
+Go to AWS Console → Cognito
+
+Create a User Pool
+
+Enable:
+
+Email/Password authentication
+
+Google Sign-in (optional)
+
+Create an App Client
+
+Copy:
+
+User Pool ID
+
+App Client ID
+
+Add to .env:
+
+VITE_AWS_REGION=ap-south-1
+VITE_COGNITO_USER_POOL_ID=your_user_pool_id
+VITE_COGNITO_CLIENT_ID=your_client_id
+
+🗄 3️⃣ Database Setup (Amazon DynamoDB)
+
+Use Amazon Web Services DynamoDB
+
+Steps:
+
+Go to DynamoDB → Create Table
+
+Table Name: Content
+
+Partition Key: userId (String)
+
+Billing mode: On-demand
+
+📦 4️⃣ Storage Setup (Amazon S3)
+
+Use Amazon Web Services S3
+
+Steps:
+
+Create a new bucket
+
+Enable CORS if frontend uploads directly
+
+Add bucket policy (restrict to your app)
+
+Copy bucket name to .env
+
+VITE_S3_BUCKET_NAME=your_bucket_name
+
+⚡ 5️⃣ Backend Setup (AWS Lambda + API Gateway)
+Create Lambda Function
+
+Go to Lambda → Create Function
+
+Runtime: Node.js 18+
+
+Attach IAM Role with access to:
+
+DynamoDB
+
+S3
+
+Bedrock (if using AI)
+
+Connect API Gateway
+
+Go to API Gateway
+
+Create HTTP API
+
+Attach Lambda function
+
+Copy API endpoint URL
+
+Add to .env:
+
+VITE_API_BASE_URL=https://your-api-id.execute-api.region.amazonaws.com
+
+🤖 6️⃣ AI Setup
+Generative AI
+
+Use Amazon Web Services Bedrock
+
+Enable Bedrock in your region
+
+Grant Lambda permission to invoke model
+
+Call model inside Lambda function
+
+Media Analysis (Optional)
+
+Use Amazon Web Services Rekognition
+
+Attach Rekognition access policy to Lambda
+
+🔒 7️⃣ IAM Security Configuration
+
+Instead of Firestore rules:
+
+Go to IAM
+
+Create Role for Lambda
+
+Attach policies:
+
+AmazonDynamoDBFullAccess (or scoped)
+
+AmazonS3FullAccess (or scoped)
+
+AmazonBedrockFullAccess
+
+Assign role to Lambda
+
+Use least-privilege principle for production.
+
+🖥 Development
+
+Install dependencies:
+
+npm install
+
+
+Run locally:
+
 npm run dev
-```
 
-The application will be available at `http://localhost:5173`
 
-### Build
+App runs at:
 
-Build for production:
-```bash
+http://localhost:5173
+
+🏗 Frontend Deployment (Production)
+Option 1: S3 + CloudFront (Recommended)
+
+Use:
+
+Amazon Web Services S3
+
+Amazon Web Services CloudFront
+
+Build project:
 npm run build
-```
 
-### Testing
+Upload build folder to S3:
+aws s3 sync dist/ s3://your-bucket-name
 
-Run tests:
-```bash
+Enable Static Website Hosting in S3:
+
+Go to Bucket → Properties → Static Website Hosting
+
+Set index.html
+
+(Optional) Use CloudFront for CDN performance.
+
+🚀 Backend Deployment (Lambda)
+
+If deploying manually:
+
+Zip your Lambda code
+
+Upload via AWS Console
+
+If using AWS CLI:
+
+zip function.zip index.js
+aws lambda update-function-code \
+  --function-name your-function-name \
+  --zip-file fileb://function.zip
+
+🧪 Testing
 npm run test
-```
-
-Run property-based tests:
-```bash
 npm run test:property
-```
-
-## Environment Variables
-
-Create a `.env` file with the following variables:
-
-```
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
-
-## Firebase Cloud Functions
-
-The AI features are powered by Firebase Cloud Functions. To deploy:
-
-1. Navigate to the functions directory:
-   ```bash
-   cd functions
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Deploy functions:
-   ```bash
-   firebase deploy --only functions
    ```
 
 ## License
