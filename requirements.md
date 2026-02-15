@@ -2,7 +2,7 @@
 
 ## Introduction
 
-aMAZE AI is a modern, AI-powered web application designed to serve two distinct user types: Content Creators and Content Consumers. The platform leverages generative AI to provide content discovery, idea generation, productivity tracking, and reflection tools. Content Creators receive AI-powered content ideas, trending topics, and productivity planning tools, while Content Consumers get personalized content feeds, smart recommendations, and AI-assisted reflection capabilities.
+aMAZE-AI is a modern, AI-powered web application designed to serve two distinct user types: Content Creators and Content Consumers. The platform leverages generative AI to provide content discovery, idea generation, productivity tracking, and reflection tools. Content Creators receive AI-powered content ideas, trending topics, and productivity planning tools, while Content Consumers get personalized content feeds, smart recommendations, and AI-assisted reflection capabilities.
 
 ## Glossary
 
