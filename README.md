@@ -12,7 +12,7 @@ A modern, AI-powered web application for Content Creators and Content Consumers 
 - **Modern UI**: Responsive design with Tailwind CSS and Framer Motion animations
 
 ## Tech Stack
-
+Backend can be deployed using AWS services such as AWS Lambda, DynamoDB, and Cognito. Current prototype uses Firebase for rapid development.
 - **Frontend**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
