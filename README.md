@@ -53,7 +53,7 @@ aMAZE-AI/
 
 1. Clone the repository and navigate to the project directory:
    ```bash
-   cd creatorsync-ai
+   cd aMAZE-AI
    ```
 
 2. Install dependencies:
