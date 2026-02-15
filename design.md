@@ -15,47 +15,6 @@ The architecture follows a component-based design with clear separation between 
 5. **Performance**: Code splitting, lazy loading, and optimized bundle sizes
 6. **Accessibility**: WCAG-compliant UI components
 
-## Architecture
-
-graph TB
-    subgraph "Client Layer"
-        UI[React UI Components]
-        Router[React Router]
-        State[State Management - Context API]
-    end
-    
-    subgraph "Service Layer"
-        Auth[Auth Service (Cognito)]
-        DB[Database Service (DynamoDB)]
-        AI[AI Service]
-        Analytics[Analytics Service]
-    end
-    
-    subgraph "AWS Backend"
-        Cognito[Amazon Cognito]
-        APIGW[API Gateway]
-        Lambda[AWS Lambda]
-        Dynamo[(DynamoDB)]
-        S3[(S3 Storage)]
-        Bedrock[Amazon Bedrock]
-    end
-    
-    UI --> Router
-    UI --> State
-    State --> Auth
-    State --> DB
-    State --> AI
-    State --> Analytics
-    
-    Auth --> Cognito
-    DB --> APIGW
-    AI --> APIGW
-    Analytics --> APIGW
-    
-    APIGW --> Lambda
-    Lambda --> Dynamo
-    Lambda --> Bedrock
-    Lambda --> S3
 
 
 ### Technology Stack
