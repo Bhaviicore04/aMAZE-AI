@@ -1,4 +1,4 @@
-# CreatorSync AI
+# aMAZE AI
 
 A modern, AI-powered web application for Content Creators and Content Consumers built with React, TypeScript, Firebase, and Tailwind CSS.
 
