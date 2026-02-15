@@ -1,6 +1,6 @@
 # aMAZE AI
 
-A modern, AI-powered web application for Content Creators and Content Consumers built with React, TypeScript, Firebase, and Tailwind CSS.
+A modern, AI-powered web application for Content Creators and Content Consumers built with React, TypeScript, and Tailwind CSS.
 
 ## Features
 
@@ -8,7 +8,6 @@ A modern, AI-powered web application for Content Creators and Content Consumers 
 - **For Content Consumers**: Personalized content feeds, smart recommendations, AI reflection assistant, and productivity tracking
 - **Dual Role Support**: Separate dashboards and features for creators and consumers
 - **AI Integration**: Generative AI for content ideas, reflections, and chat assistance
-- **Real-time Sync**: Firebase Firestore for instant data synchronization
 - **Modern UI**: Responsive design with Tailwind CSS and Framer Motion animations
 
 ## Tech Stack
@@ -22,24 +21,21 @@ Backend can be deployed using AWS services such as AWS Lambda, DynamoDB, and Cog
 - **Forms**: React Hook Form
 - **Routing**: React Router v6
 - **Testing**: Vitest, fast-check (property-based testing)
-
-## Project Structure
-
-```
+  # Project requirements  
 aMAZE-AI/
 ├── src/
-│   ├── components/     # React components
-│   ├── pages/          # Page components
-│   ├── services/       # Service layer (auth, firestore, AI)
-│   ├── hooks/          # Custom React hooks
-│   ├── contexts/       # React contexts
-│   ├── types/          # TypeScript type definitions
-│   ├── utils/          # Utility functions
-│   └── config/         # Configuration files
-├── functions/          # Firebase Cloud Functions
-├── firestore.rules     # Firestore security rules
-└── firebase.json       # Firebase configuration
-```
+│ ├── components/ # React UI components
+│ ├── pages/ # Page components
+│ ├── services/ # Service layer (Cognito, API, AI)
+│ ├── hooks/ # Custom React hooks
+│ ├── contexts/ # React contexts
+│ ├── types/ # TypeScript type definitions
+│ ├── utils/ # Utility functions
+│ └── config/ # AWS configuration files
+├── backend/
+│ ├── lambda/ # AWS Lambda functions
+│ └── api/ # API Gateway integration logic
+├── infrastructure/ # IAM policies and deployment configs
 
 ## Setup Instructions
 Prerequisites
