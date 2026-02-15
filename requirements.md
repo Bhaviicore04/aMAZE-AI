@@ -2,19 +2,15 @@
 
 ## Introduction
 
-CreatorSync AI is a modern, AI-powered web application designed to serve two distinct user types: Content Creators and Content Consumers. The platform leverages generative AI to provide content discovery, idea generation, productivity tracking, and reflection tools. Content Creators receive AI-powered content ideas, trending topics, and productivity planning tools, while Content Consumers get personalized content feeds, smart recommendations, and AI-assisted reflection capabilities.
+aMAZE AI is a modern, AI-powered web application designed to serve two distinct user types: Content Creators and Content Consumers. The platform leverages generative AI to provide content discovery, idea generation, productivity tracking, and reflection tools. Content Creators receive AI-powered content ideas, trending topics, and productivity planning tools, while Content Consumers get personalized content feeds, smart recommendations, and AI-assisted reflection capabilities.
 
 ## Glossary
 
-- **System**: The CreatorSync AI web application
+- **System**: The aMAZE AIweb application
 - **User**: Any authenticated person using the platform (Creator or Consumer)
 - **Content_Creator**: A user who creates content for social media platforms
 - **Content_Consumer**: A user who consumes and learns from content
 - **AI_Engine**: The generative AI service that powers idea generation, summarization, and recommendations
-- **Firestore**: Firebase's NoSQL cloud database
-- **Authentication_Service**: Firebase Authentication system
-- **Dashboard**: The main interface displayed after user login
-- **Content_Idea**: AI-generated suggestion for content creation
 - **Reflection**: User-generated summary and insights from consumed content
 - **Vision_Board**: User's collection of goals, inspiration, and motivational notes
 - **Productivity_Score**: Calculated metric representing user activity and consistency
