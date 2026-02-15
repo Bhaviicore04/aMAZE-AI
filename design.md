@@ -66,30 +66,57 @@ graph TB
 - React Hook Form for form management
 - Date-fns for date manipulation
 
-**Backend (Firebase):**
-- Firebase Authentication (Google OAuth, Email/Password)
-- Cloud Firestore (NoSQL database)
-- Firebase Cloud Functions (AI integration, serverless logic)
-- Firebase Hosting (static site hosting)
-- Vertex AI or Firebase Extensions for generative AI
+Backend Infrastructure:
 
-**AI Integration:**
-- Firebase Vertex AI API for content generation
-- Custom prompts for idea generation, summarization, and reflection
-- Streaming responses for chat interface
+Amazon Web Services Cognito
+(User Authentication – Email/Password, Google OAuth)
 
+Amazon Web Services DynamoDB
+(Scalable NoSQL database for users, content, analytics)
+
+Amazon Web Services Lambda
+(Serverless backend logic and AI orchestration)
+
+Amazon Web Services API Gateway
+(Secure API exposure for frontend communication)
+
+Amazon Web Services S3
+(Static site hosting & media storage)
+
+Amazon Web Services CloudFront
+(Global CDN for fast content delivery)
+
+AI Integration (AWS-Native)
+
+Amazon Web Services Bedrock
+→ Generative AI for:
+
+Content idea generation
+
+Caption & script creation
+
+Summarization
+
+Personalized recommendations
+
+Custom prompt engineering layer inside Lambda
+
+Streaming responses enabled via API Gateway + Lambda integration
+
+Scalable serverless AI processing architecture
 ### Project Structure
 
 ```
 aMAZE-ai/
+aMAZE-ai/
 ├── src/
 │   ├── components/
-│   │   ├── common/          # Shared components (Button, Card, Modal, etc.)
-│   │   ├── auth/            # Authentication components
-│   │   ├── creator/         # Creator-specific components
-│   │   ├── consumer/        # Consumer-specific components
-│   │   ├── admin/           # Admin panel components
-│   │   └── layout/          # Layout components (Header, Sidebar, etc.)
+│   │   ├── common/              # Shared UI components
+│   │   ├── auth/                # Cognito authentication components
+│   │   ├── creator/             # Creator-specific components
+│   │   ├── consumer/            # Consumer-specific components
+│   │   ├── admin/               # Admin panel components
+│   │   └── layout/              # Layout components (Header, Sidebar, etc.)
 │   ├── pages/
 │   │   ├── AuthPage.tsx
 │   │   ├── OnboardingPage.tsx
@@ -97,14 +124,14 @@ aMAZE-ai/
 │   │   ├── ConsumerDashboard.tsx
 │   │   └── AdminPanel.tsx
 │   ├── services/
-│   │   ├── auth.service.ts
-│   │   ├── firestore.service.ts
-│   │   ├── ai.service.ts
-│   │   └── analytics.service.ts
+│   │   ├── auth.service.ts          # Amazon Cognito integration
+│   │   ├── database.service.ts      # DynamoDB operations
+│   │   ├── ai.service.ts            # Bedrock / AI API calls
+│   │   └── analytics.service.ts     # Analytics processing
 │   ├── hooks/
-│   │   ├── useAuth.ts
-│   │   ├── useFirestore.ts
-│   │   ├── useAI.ts
+│   │   ├── useAuth.ts               # Cognito auth hook
+│   │   ├── useDatabase.ts           # DynamoDB hook
+│   │   ├── useAI.ts                 # AI interaction hook
 │   │   └── useTheme.ts
 │   ├── contexts/
 │   │   ├── AuthContext.tsx
@@ -119,11 +146,12 @@ aMAZE-ai/
 │   │   ├── formatters.ts
 │   │   └── constants.ts
 │   ├── config/
-│   │   └── firebase.config.ts
+│   │   └── aws.config.ts           # AWS SDK configuration
 │   ├── App.tsx
 │   └── main.tsx
-├── functions/              # Firebase Cloud Functions
-│   ├── src/
+│
+├── backend/
+│   ├── lambda/                     # AWS Lambda functions
 │   │   ├── ai/
 │   │   │   ├── generateIdeas.ts
 │   │   │   ├── generateReflection.ts
@@ -131,10 +159,11 @@ aMAZE-ai/
 │   │   │   └── recommendations.ts
 │   │   └── index.ts
 │   └── package.json
-├── firestore.rules
-├── firebase.json
+│
+├── infrastructure/                  # IAM policies & deployment configs
+│
 └── package.json
-```
+
 
 ## Components and Interfaces
 
@@ -289,8 +318,7 @@ interface ChatMessage {
 
 ### Service Layer Interfaces
 
-```typescript
-// Auth Service
+// Auth Service (Amazon Cognito)
 interface IAuthService {
   signInWithGoogle(): Promise<User>;
   signInWithEmail(email: string, password: string): Promise<User>;
@@ -300,8 +328,8 @@ interface IAuthService {
   onAuthStateChanged(callback: (user: User | null) => void): () => void;
 }
 
-// Firestore Service
-interface IFirestoreService {
+// Database Service (Amazon DynamoDB)
+interface IDatabaseService {
   // User operations
   createUser(user: User): Promise<void>;
   getUser(uid: string): Promise<User | null>;
@@ -337,7 +365,7 @@ interface IFirestoreService {
   getAllConsumerAnalytics(): Promise<ConsumerAnalytics[]>;
 }
 
-// AI Service
+// AI Service (AWS Bedrock via Lambda)
 interface IAIService {
   generateContentIdeas(request: IdeaGenerationRequest): Promise<IdeaGenerationResponse>;
   generateReflection(request: ReflectionRequest): Promise<ReflectionResponse>;
@@ -354,7 +382,7 @@ interface IAnalyticsService {
   trackContentConsumption(userId: string, duration: number, isProductive: boolean): Promise<void>;
   generateWeeklyReport(userId: string): Promise<WeeklyReport>;
 }
-```
+
 
 ### Key React Components
 
@@ -444,217 +472,165 @@ interface ThemeToggleProps {
 
 ## Data Models
 
-### Firestore Collections Structure
+Users Table
 
-```
-users/
-  {uid}/
-    - email: string
-    - displayName: string
-    - photoURL: string
-    - role: 'creator' | 'consumer' | 'admin'
-    - interests: string[]
-    - niche: string
-    - targetAudience: string
-    - themePreference: 'light' | 'dark'
-    - createdAt: timestamp
-    - updatedAt: timestamp
+Table Name: Users
+Partition Key: userId (String)
 
-contentIdeas/
-  {ideaId}/
-    - userId: string
-    - type: 'short-form' | 'long-form' | 'carousel' | 'post'
-    - title: string
-    - hook: string
-    - caption: string
-    - description: string
-    - niche: string
-    - trending: boolean
-    - saved: boolean
-    - createdAt: timestamp
+Attributes:
 
-visionBoards/
-  {boardId}/
-    - userId: string
-    - goals: array<Goal>
-    - inspirationImages: string[]
-    - motivationalNotes: array<Note>
-    - createdAt: timestamp
-    - updatedAt: timestamp
+- email: string
+- displayName: string
+- photoURL: string
+- role: 'creator' | 'consumer' | 'admin'
+- interests: string[]
+- niche: string
+- targetAudience: string
+- themePreference: 'light' | 'dark'
+- createdAt: number (timestamp)
+- updatedAt: number (timestamp)
 
-schedules/
-  {scheduleId}/
-    - userId: string
-    - contentItems: array<ContentItem>
-    - weekStartDate: timestamp
-    - consistencyScore: number
+ContentIdeas Table
 
-reflections/
-  {reflectionId}/
-    - userId: string
-    - contentTitle: string
-    - contentUrl: string
-    - userSummary: string
-    - aiSummary: string
-    - actionSteps: string[]
-    - discussionPrompts: string[]
-    - createdAt: timestamp
+Table Name: ContentIdeas
+Partition Key: ideaId (String)
+GSI: userId-index
 
-analytics/
-  creators/
-    {userId}/
-      - weeklyProductivityScore: number
-      - contentCreationStreak: number
-      - goalCompletionPercentage: number
-      - totalContentPlanned: number
-      - totalContentPosted: number
-      - lastUpdated: timestamp
-  
-  consumers/
-    {userId}/
-      - totalTimeSpent: number
-      - productiveTime: number
-      - nonProductiveTime: number
-      - weeklyReport: WeeklyReport
-      - lastUpdated: timestamp
+- ideaId: string
+- userId: string
+- type: 'short-form' | 'long-form' | 'carousel' | 'post'
+- title: string
+- hook: string
+- caption: string
+- description: string
+- niche: string
+- trending: boolean
+- saved: boolean
+- createdAt: number
 
-chatHistory/
-  {userId}/
-    sessions/
-      {sessionId}/
-        - messages: array<ChatMessage>
-        - context: string
-        - createdAt: timestamp
-```
+VisionBoards Table
 
-### Firestore Security Rules
+Partition Key: boardId
+GSI: userId-index
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    
-    // Users collection
-    match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isAdmin();
-    }
-    
-    // Content Ideas collection
-    match /contentIdeas/{ideaId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isOwner(resource.data.userId);
-    }
-    
-    // Vision Boards collection
-    match /visionBoards/{boardId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isOwner(resource.data.userId);
-    }
-    
-    // Schedules collection
-    match /schedules/{scheduleId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isOwner(resource.data.userId);
-    }
-    
-    // Reflections collection
-    match /reflections/{reflectionId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if isOwner(resource.data.userId);
-    }
-    
-    // Analytics collection
-    match /analytics/creators/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId);
-    }
-    
-    match /analytics/consumers/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId);
-    }
-    
-    // Chat History collection
-    match /chatHistory/{userId}/sessions/{sessionId} {
-      allow read, write: if isOwner(userId);
-    }
+Schedules Table
+
+Partition Key: scheduleId
+GSI: userId-weekStartDate-index
+
+Reflections Table
+
+Partition Key: reflectionId
+GSI: userId-index
+
+Analytics Table (Single Table Design Recommended)
+
+Partition Key: userId
+Sort Key: type (creator | consumer)
+
+ChatHistory Table
+
+Partition Key: userId
+Sort Key: sessionId
+
+- messages: ChatMessage[]
+- context: string
+- createdAt: number
+
+🔒 Access Control (Replacing Firestore Security Rules)
+
+Instead of Firestore rules, we use:
+
+Amazon Web Services Cognito for authentication
+
+Amazon Web Services IAM Roles & Policies for authorization
+
+API validation inside Amazon Web Services Lambda
+
+Access Logic:
+
+Users can only access their own data
+
+Admin role verified via Cognito JWT claims
+
+Role-based access enforced inside Lambda
+
+Fine-grained IAM policies restrict DynamoDB access
+
+⚡ AWS Lambda (Replacing Firebase Cloud Functions)
+
+AI integration is implemented using:
+
+Amazon Web Services Lambda
+
+Invoking Amazon Web Services Bedrock
+
+Exposed via Amazon Web Services API Gateway
+
+Example: Lambda – Generate Content Ideas
+export const generateContentIdeas = async (event: any) => {
+  const user = event.requestContext.authorizer.jwt.claims;
+
+  if (!user) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ message: "Unauthorized" }),
+    };
   }
-}
-```
 
-### Firebase Cloud Functions
+  const { niche, interests, targetAudience, contentType } = JSON.parse(event.body);
 
-The AI integration will be implemented using Firebase Cloud Functions that call Vertex AI:
+  const prompt = `Generate content ideas for a ${niche} creator targeting ${targetAudience}`;
 
-```typescript
-// functions/src/ai/generateIdeas.ts
-export const generateContentIdeas = functions.https.onCall(async (data, context) => {
-  // Authenticate user
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
-  }
-  
-  const { niche, interests, targetAudience, contentType } = data;
-  
-  // Call Vertex AI with structured prompt
-  const prompt = `Generate content ideas for a ${niche} content creator targeting ${targetAudience}...`;
-  
-  // Return structured response
-  return { ideas: [...] };
-});
+  // Call Amazon Bedrock model here
 
-// functions/src/ai/generateReflection.ts
-export const generateReflection = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
-  }
-  
-  const { contentTitle, userSummary, contentUrl } = data;
-  
-  // Generate AI-enhanced reflection
-  const prompt = `Based on this user summary: "${userSummary}"...`;
-  
   return {
-    aiSummary: '...',
-    actionSteps: [...],
-    discussionPrompts: [...]
+    statusCode: 200,
+    body: JSON.stringify({ ideas: [] }),
   };
-});
+};
 
-// functions/src/ai/chatAssistant.ts
-export const chatWithAssistant = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+Example: Lambda – Generate Reflection
+export const generateReflection = async (event: any) => {
+  const user = event.requestContext.authorizer.jwt.claims;
+
+  if (!user) {
+    return { statusCode: 401 };
   }
-  
-  const { messages, context: chatContext } = data;
-  
-  // Stream response from AI
-  // Return assistant message
-  return { message: '...' };
-});
-```
+
+  const { contentTitle, userSummary, contentUrl } = JSON.parse(event.body);
+
+  const prompt = `Enhance this reflection: ${userSummary}`;
+
+  // Invoke Bedrock model
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      aiSummary: "...",
+      actionSteps: [],
+      discussionPrompts: [],
+    }),
+  };
+};
+
+Example: Lambda – Chat Assistant
+export const chatWithAssistant = async (event: any) => {
+  const user = event.requestContext.authorizer.jwt.claims;
+
+  if (!user) {
+    return { statusCode: 401 };
+  }
+
+  const { messages, context } = JSON.parse(event.body);
+
+  // Stream response from Bedrock (if enabled)
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: "..." }),
+  };
+};
 
 ## Correctness Properties
 
